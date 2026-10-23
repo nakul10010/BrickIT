@@ -1,0 +1,5 @@
+{% extends 'base.html' %}{% block title %}{% if expense %}Edit cost{% else %}Record a cost{% endif %}{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">BUSINESS COSTS</p><h1>{% if expense %}Edit cost{% else %}Record a cost{% endif %}</h1><p class="subtitle">Track electricity, fuel, and miscellaneous expenses.</p></div></div>
+<div class="panel form-panel"><form method="post">{% csrf_token %}{{ form.as_p }}<button class="button" type="submit">{% if expense %}Save changes{% else %}Save cost{% endif %}</button> <a class="button secondary" href="{% url 'analytics' %}?year={{ selected_year }}">Cancel</a></form></div>
+{% endblock %}

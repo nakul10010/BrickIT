@@ -1,0 +1,75 @@
+{% extends 'base.html' %}{% load humanize %}
+{% block title %}Analytics{% endblock %}
+{% block content %}
+<div class="page-heading">
+    <div><p class="eyebrow">BUSINESS INSIGHTS</p><h1>Analytics</h1><p class="subtitle">Understand sales, customers, production, and operating costs.</p></div>
+    <a class="button" href="{% url 'add_expense' %}?year={{ selected_year }}">＋ Add cost</a>
+</div>
+<form class="filter-bar filter-form analytics-filter" method="get">
+    <div><label for="analytics-year">Year</label><select id="analytics-year" name="year">{% for year in years %}<option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>{{ year }}</option>{% endfor %}</select></div>
+    <button class="button secondary" type="submit">Show analytics</button>
+</form>
+<div class="cards">
+    <div class="card stat-card"><div class="stat-label">Sales value</div><div class="stat-value">₹{{ total_sales_value|floatformat:2|intcomma }}</div><div class="stat-note">billed in {{ selected_year }}</div></div>
+    <div class="card stat-card"><div class="stat-label">Amount received</div><div class="stat-value">₹{{ total_amount_received|floatformat:2|intcomma }}</div><div class="stat-note">recorded in {{ selected_year }}</div></div>
+    <div class="card stat-card"><div class="stat-label">Bricks sold</div><div class="stat-value">{{ total_quantity|intcomma }}</div><div class="stat-note">{{ sale_count|intcomma }} sales</div></div>
+    <div class="card stat-card"><div class="stat-label">Production</div><div class="stat-value">{{ production_total|intcomma }}</div><div class="stat-note">bricks made in {{ selected_year }}</div></div>
+</div>
+<section class="panel analytics-panel">
+        <div class="analytics-section-heading"><div><h2>Top customers</h2><p>Ranked by total sales value {% if customer_month_name %}in {{ customer_month_name }} {{ selected_year }}{% else %}in {{ selected_year }}{% endif %}</p></div><span class="analytics-count">{{ customer_count }} customers</span></div>
+        <form class="customer-month-filter" method="get" action="{% url 'analytics' %}">
+            <input type="hidden" name="year" value="{{ selected_year }}">
+            <label class="visually-hidden" for="customer-month">Filter top customers by month</label>
+            <select id="customer-month" name="customer_month"><option value="">All year</option>{% for month_value, month_label in month_choices %}<option value="{{ month_value }}" {% if selected_customer_month == month_value|stringformat:"s" %}selected{% endif %}>{{ month_label }}</option>{% endfor %}</select>
+            <button class="button secondary small" type="submit">Filter</button>
+        </form>
+        {% for customer in top_customers %}
+        <div class="analytics-rank-row"><div class="analytics-rank-main"><div class="analytics-rank-title"><strong>{{ forloop.counter }}. {{ customer.customer__name }}</strong><span>₹{{ customer.sales_value|default:0|floatformat:2|intcomma }}</span></div><div class="analytics-bar"><span style="width:{{ customer.bar_width }}%"></span></div><small>{{ customer.quantity_sold|intcomma }} bricks · ₹{{ customer.amount_received|default:0|floatformat:2|intcomma }} received</small></div></div>
+        {% empty %}<p class="empty">No customer sales recorded in {{ selected_year }}.</p>{% endfor %}
+</section>
+<section class="panel analytics-panel analytics-monthly">
+    <div class="analytics-section-heading"><div><h2>Monthly sales</h2><p>Sales value across {{ selected_year }}</p></div></div>
+    <div class="monthly-chart" role="img" aria-label="Monthly sales value for {{ selected_year }}">
+        {% for month in monthly_sales %}<div class="monthly-chart-column"><strong>₹{{ month.sales_value|floatformat:0|intcomma }}</strong><div class="monthly-chart-track"><span style="height:{{ month.bar_width }}%"></span></div><span class="monthly-chart-label">{{ month.label }}</span></div>{% endfor %}
+    </div>
+</section>
+<section class="panel analytics-panel analytics-monthly">
+    <div class="analytics-section-heading"><div><h2>Monthly cost comparison</h2><p>Compare electricity, fuel, and miscellaneous costs in {{ selected_year }}</p></div></div>
+    <div class="cost-chart-legend" aria-label="Chart legend"><span><i class="cost-legend-electricity"></i>Electricity</span><span><i class="cost-legend-fuel"></i>Fuel</span><span><i class="cost-legend-miscellaneous"></i>Miscellaneous</span></div>
+    <p class="cost-chart-hint">Select a month to see the exact amounts.</p>
+    <div class="cost-chart" aria-label="Monthly electricity, fuel, and miscellaneous costs in {{ selected_year }}">
+        {% for month in monthly_costs %}<button class="cost-chart-row" type="button" aria-pressed="false" data-month="{{ month.label }} {{ selected_year }}" data-electricity="₹{{ month.electricity|floatformat:2|intcomma }}" data-fuel="₹{{ month.fuel|floatformat:2|intcomma }}" data-miscellaneous="₹{{ month.miscellaneous|floatformat:2|intcomma }}" data-total="₹{{ month.total|floatformat:2|intcomma }}"><span class="cost-chart-month">{{ month.label }}</span><span class="cost-chart-track" aria-hidden="true"><span class="cost-chart-segment electricity" style="width:{{ month.segments.electricity }}%"></span><span class="cost-chart-segment fuel" style="width:{{ month.segments.fuel }}%"></span><span class="cost-chart-segment miscellaneous" style="width:{{ month.segments.miscellaneous }}%"></span></span><strong class="cost-chart-total">₹{{ month.total|floatformat:0|intcomma }}</strong></button>{% endfor %}
+    </div>
+    <div class="cost-chart-details" id="cost-chart-details" aria-live="polite" hidden><h3 id="cost-chart-detail-month"></h3><div><span>Electricity<strong id="cost-chart-detail-electricity"></strong></span><span>Fuel<strong id="cost-chart-detail-fuel"></strong></span><span>Miscellaneous<strong id="cost-chart-detail-miscellaneous"></strong></span><span>Total costs<strong id="cost-chart-detail-total"></strong></span></div></div>
+</section>
+<section class="section">
+    <div class="section-heading"><h2>Recorded costs</h2><a class="button small" href="{% url 'add_expense' %}?year={{ selected_year }}">＋ Add cost</a></div>
+    <div class="table-wrap"><table><thead><tr><th>Date</th><th>Category</th><th>Amount</th><th>Details</th><th>Actions</th></tr></thead><tbody>{% for expense in year_expenses %}<tr><td>{{ expense.date|date:"d/m/Y" }}</td><td>{{ expense.get_category_display }}</td><td class="money">₹{{ expense.amount|floatformat:2|intcomma }}</td><td>{{ expense.note|default:"—" }}</td><td><div class="expense-actions"><a class="button secondary small" href="{% url 'edit_expense' expense.id %}">Edit</a><form method="post" action="{% url 'delete_expense' expense.id %}" onsubmit="return confirm('Delete this cost record?')">{% csrf_token %}<button class="button danger small" type="submit">Delete</button></form></div></td></tr>{% empty %}<tr><td class="empty" colspan="5">No costs recorded for {{ selected_year }} yet.</td></tr>{% endfor %}</tbody></table></div>
+</section>
+<script>
+(() => {
+    const rows = document.querySelectorAll('.cost-chart-row');
+    const details = document.getElementById('cost-chart-details');
+    if (!rows.length || !details) return;
+    const fields = {
+        electricity: document.getElementById('cost-chart-detail-electricity'),
+        fuel: document.getElementById('cost-chart-detail-fuel'),
+        miscellaneous: document.getElementById('cost-chart-detail-miscellaneous'),
+        total: document.getElementById('cost-chart-detail-total'),
+    };
+    rows.forEach((row) => row.addEventListener('click', () => {
+        rows.forEach((item) => {
+            item.classList.remove('selected');
+            item.setAttribute('aria-pressed', 'false');
+        });
+        row.classList.add('selected');
+        row.setAttribute('aria-pressed', 'true');
+        document.getElementById('cost-chart-detail-month').textContent = row.dataset.month;
+        Object.entries(fields).forEach(([key, element]) => {
+            element.textContent = row.dataset[key];
+        });
+        details.hidden = false;
+    }));
+})();
+</script>
+{% endblock %}

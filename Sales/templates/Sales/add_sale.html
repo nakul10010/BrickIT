@@ -1,0 +1,10 @@
+{% extends 'base.html' %}{% block title %}Add sale{% endblock %}{% block breadcrumb %}Sales / New sale{% endblock %}{% block section_back %}<a class="button secondary small section-back-link" href="{% url 'sales_list' %}">← Back</a>{% endblock %}{% block content %}
+<div class="page-heading"><div><p class="eyebrow">REVENUE</p><h1>Add Sale</h1><p class="subtitle">Add an order and keep payment and delivery details up to date.</p></div></div><div class="panel form-panel"><form method="post">{% csrf_token %}
+    {{ form.non_field_errors }}
+    {{ form.customer.as_field_group }}
+    <details class="new-customer-panel"><summary>＋ Add a new customer</summary><div class="new-customer-fields">{{ form.new_customer_name.as_field_group }}{{ form.new_customer_phone.as_field_group }}{{ form.new_customer_address.as_field_group }}</div></details>
+    {{ form.brick_type.as_field_group }}{{ form.quantity.as_field_group }}{{ form.price_per_brick.as_field_group }}{{ form.amount_paid.as_field_group }}{{ form.payment_method.as_field_group }}{{ form.date.as_field_group }}
+    <h3 class="form-section-title">Delivery details</h3>
+    {{ form.delivery_date.as_field_group }}{{ form.delivery_time.as_field_group }}{{ form.delivery_address.as_field_group }}{{ form.is_delivered.as_field_group }}
+    <button class="button" type="submit">Save Sale</button> <a class="button secondary" href="{% url 'sales_list' %}">Cancel</a></form></div>
+{% endblock %}

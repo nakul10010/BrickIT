@@ -1,0 +1,24 @@
+{% extends 'base.html' %}{% load humanize static %}
+{% block title %}Overview{% endblock %}
+{% block breadcrumb %}Overview{% endblock %}
+{% block body_class %}home-page{% endblock %}
+{% block body_style %}--welcome-image:url('{% static 'core/images/gomti-bricks-factory.jpg' %}'){% endblock %}
+{% block page_class %}home-page-content{% endblock %}
+{% block content %}
+<section class="welcome-hero" aria-label="Gomti Bricks factory">
+    <div class="welcome-hero-content">
+        <div class="welcome-hero-top"><div class="welcome-hero-copy"><h1>GOMTI BRICKS</h1></div></div>
+        <div class="cards welcome-stats">
+            <div class="card stat-card"><div class="stat-label">Today's production</div><div class="stat-value">{{ today_production|intcomma }}</div><div class="stat-note">bricks made today</div></div>
+            <div class="card stat-card"><div class="stat-label">Today's sales</div><div class="stat-value">{{ today_sales|intcomma }}</div><div class="stat-note">bricks · ₹{{ today_sales_amount|floatformat:2|intcomma }}</div></div>
+            <div class="card stat-card"><div class="stat-label">Pending deliveries</div><div class="stat-value">{{ pending_deliveries|intcomma }}</div><div class="stat-note">orders to deliver</div></div>
+            <div class="card stat-card"><div class="stat-label">Customer balance due</div><div class="stat-value">₹{{ total_due|floatformat:2|intcomma }}</div><div class="stat-note">outstanding across sales</div></div>
+        </div>
+    </div>
+</section>
+<div class="home-dashboard">
+<section class="section"><div class="section-heading"><h2>Current inventory</h2></div>
+<div class="panel"><div class="inventory-grid">{% for item in inventory %}<div class="inventory-item"><strong>{{ item.brick_type.name }}</strong><span>{{ item.quantity|intcomma }} bricks available</span></div>{% empty %}<p class="empty">No inventory recorded yet.</p>{% endfor %}</div></div></section>
+<section class="section"><div class="section-heading"><h2>Recent sales</h2><a href="{% url 'sales_list' %}">View all sales →</a></div><div class="table-wrap"><table><thead><tr><th>Date</th><th>Customer</th><th>Brick type</th><th>Quantity</th><th>Total amount</th></tr></thead><tbody>{% for sale in recent_sales %}<tr><td>{{ sale.date|date:"d/m/Y" }}</td><td>{% if sale.customer %}<a class="customer-name-inline" href="{% url 'customer_detail' sale.customer.id %}">{{ sale.customer.name }}</a>{% else %}Walk-in customer{% endif %}</td><td>{{ sale.brick_type }}</td><td>{{ sale.quantity|intcomma }}</td><td class="money">₹{{ sale.total_amount|floatformat:2|intcomma }}</td></tr>{% empty %}<tr><td class="empty" colspan="5">No sales yet. New sales will show here.</td></tr>{% endfor %}</tbody></table></div></section>
+</div>
+{% endblock %}

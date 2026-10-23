@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Record attendance{% endblock %}
+{% block section_back %}<a class="button secondary small section-back-link" href="{% url 'attendance_list' %}">← Attendance</a>{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">WORKER RECORDS</p><h1>Record attendance</h1><p class="subtitle">Choose one or more labourers and record the same date and status for them.</p></div></div>
+<div class="panel form-panel bulk-attendance-panel"><form method="post">{% csrf_token %}
+    <div class="bulk-labour-heading"><label>{{ form.employees.label }}</label><label class="select-all-option"><input type="checkbox" id="select-all-labour"> Select all</label></div>
+    <div class="checkbox-grid">{{ form.employees }}</div>{% if form.employees.errors %}<ul class="errorlist">{{ form.employees.errors }}</ul>{% endif %}
+    <div class="bulk-attendance-fields"><p>{{ form.date.label_tag }}{{ form.date }}{% if form.date.errors %}<span class="errorlist">{{ form.date.errors }}</span>{% endif %}</p><p>{{ form.status.label_tag }}{{ form.status }}{% if form.status.errors %}<span class="errorlist">{{ form.status.errors }}</span>{% endif %}</p></div>
+    <button class="button" type="submit">Save attendance for selected labour</button> <a class="button secondary" href="{% url 'attendance_list' %}">Cancel</a>
+</form></div>
+<script>
+const selectAllLabour = document.getElementById("select-all-labour");
+selectAllLabour.addEventListener("change", () => {
+    document.querySelectorAll('.checkbox-grid input[name="employees"]').forEach((checkbox) => {
+        checkbox.checked = selectAllLabour.checked;
+    });
+});
+</script>
+{% endblock %}

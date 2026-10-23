@@ -1,0 +1,28 @@
+{% extends 'base.html' %}{% load humanize %}
+{% block title %}Labour Details{% endblock %}
+{% block breadcrumb %}Labour Details{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">YOUR PEOPLE</p><h1>Labour Details</h1><p class="subtitle">Select a name to view that worker’s pay and profile details.</p></div><a class="button" href="{% url 'add_employee' %}">＋ Add Labour</a></div>
+<form class="filter-bar filter-form" method="get"><div><label for="month">Pay month</label><input type="month" id="month" name="month" value="{{ selected_month }}"></div><button class="button secondary" type="submit">Show month</button></form>
+<div class="labour-name-list">
+{% for employee in employees %}
+<details class="labour-accordion">
+    <summary aria-label="Show {{ employee.name }} details">
+        <span class="labour-summary-identity">
+            {% if employee.photo %}<img class="labour-summary-avatar" src="{{ employee.photo.url }}" alt="">
+            {% else %}<span class="labour-summary-avatar labour-summary-initial" aria-hidden="true">{{ employee.name|first|upper }}</span>{% endif %}
+            <span class="labour-summary-copy"><strong>{{ employee.name }}</strong><small>{{ employee.designation }} · View pay and profile</small></span>
+        </span>
+        <span class="labour-summary-action"><span class="labour-summary-label">View details</span><span class="accordion-caret" aria-hidden="true">⌄</span></span>
+    </summary>
+    <article class="employee-card salary-{{ employee.salary_status }}">
+        <div class="employee-top"><div class="labour-identity">{% if employee.photo %}<img class="labour-avatar" src="{{ employee.photo.url }}" alt="Photo of {{ employee.name }}">{% else %}<span class="labour-avatar labour-initial">{{ employee.name|first|upper }}</span>{% endif %}<div><h2 class="employee-name">{{ employee.name }}</h2><div class="employee-meta">{{ employee.designation }} · {% if employee.designation|lower == 'manager' %}Monthly salary{% else %}Daily rate{% endif %} ₹{{ employee.salary|floatformat:2|intcomma }}</div></div></div><div class="employee-card-actions"><a class="button secondary small" href="{% url 'employee_detail' employee.id %}" aria-label="View {{ employee.name }} details">ⓘ Info</a><a class="button secondary small" href="{% url 'edit_employee' employee.id %}">Edit</a><form method="post" action="{% url 'remove_employee' employee.id %}" onsubmit="return confirm('Remove {{ employee.name|escapejs }} from active workers? Attendance and salary history will be kept.');">{% csrf_token %}<button class="button danger small" type="submit">Remove</button></form></div></div>
+        <div class="salary-status-row"><span class="salary-status-badge">{{ employee.salary_status_label }}</span><span class="employee-meta">{% if employee.designation|lower == 'manager' %}Monthly salary{% else %}Weekly pay{% endif %} · ₹{{ employee.current_salary_amount_due|floatformat:2|intcomma }} · Due {{ employee.current_salary_due_date|date:"d/m/Y" }}</span>{% if employee.salary_status == 'unpaid' %}<form method="post" action="{% url 'mark_salary_paid' employee.id %}">{% csrf_token %}<button class="button small salary-paid-button" type="submit">Mark ₹{{ employee.current_salary_amount_due|floatformat:2|intcomma }} paid</button></form>{% endif %}</div>
+        {% if employee.salary_status == 'unpaid' %}<p class="salary-reminder">Salary reminder: ₹{{ employee.current_salary_amount_due|floatformat:2|intcomma }} due on {{ employee.current_salary_due_date|date:"d/m/Y" }}</p>{% endif %}
+        <p class="employee-meta borrowed-summary">Borrowed amount · ₹{{ employee.borrowed_amount|floatformat:2|intcomma }}</p>
+        <div class="pay-breakdown"><div class="pay-heading"><strong>{% if employee.designation|lower == 'manager' %}Monthly pay{% else %}Weekly pay · Thu–Tue{% endif %}</strong><span>Month total · ₹{{ employee.month_pay_total|floatformat:2|intcomma }}</span></div>{% if employee.designation|lower == 'manager' %}<div class="pay-row"><span>Fixed monthly salary</span><strong>₹{{ employee.month_pay_total|floatformat:2|intcomma }}</strong></div>{% else %}{% for week in employee.weekly_payments %}<div class="pay-row"><span>Week {{ week.week_number }} <small>{{ week.start_date|date:"d/m" }}–{{ week.end_date|date:"d/m" }} · {{ week.present_days }} present</small></span><strong>₹{{ week.pay|floatformat:2|intcomma }}</strong></div>{% empty %}<div class="pay-row"><span>No Thursday-to-Tuesday pay periods this month</span></div>{% endfor %}{% endif %}</div>
+    </article>
+</details>
+{% empty %}<div class="panel"><p class="subtitle">No labour records added yet.</p><a class="button" href="{% url 'add_employee' %}">Add your first labour record</a></div>{% endfor %}
+</div>
+{% endblock %}
