@@ -2,7 +2,6 @@ from django.db import models, transaction #ensures Production and Inventory chan
 from django.core.validators import MinValueValidator
 from django.utils import timezone
 from django.conf import settings
-from django.contrib.auth.hashers import make_password
 from django.core.validators import RegexValidator
 
 
@@ -128,18 +127,3 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"Profile for {self.user.get_username()}"
-
-
-class PasswordResetOTP(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    otp_hash = models.CharField(max_length=128)
-    created_at = models.DateTimeField(default=timezone.now)
-    expires_at = models.DateTimeField()
-    attempts = models.PositiveSmallIntegerField(default=0)
-    consumed = models.BooleanField(default=False)
-    window_started_at = models.DateTimeField(default=timezone.now)
-    sent_in_window = models.PositiveSmallIntegerField(default=0)
-
-    @classmethod
-    def hash_otp(cls, otp):
-        return make_password(otp)

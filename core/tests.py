@@ -1,12 +1,8 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
-from django.contrib.auth.hashers import check_password
 from decimal import Decimal
-from datetime import timedelta
-from unittest.mock import patch
-from django.utils import timezone
 
-from .models import BrickType, Expense, Inventory, PasswordResetOTP, Production, UserProfile
+from .models import BrickType, Expense, Inventory, Production
 from Sales.models import Customer, Sales
 
 
@@ -57,73 +53,6 @@ class AuthenticationAccessTest(TestCase):
 
         response = self.client.post("/accounts/logout/")
         self.assertRedirects(response, "/accounts/login/")
-
-    def test_forgot_password_page_is_public_and_linked_from_login(self):
-        self.assertContains(self.client.get("/accounts/login/"), "Forgot password?")
-        response = self.client.get("/accounts/password-reset/")
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "mobile number registered to that account")
-
-    @patch("core.auth_views.secrets.randbelow", return_value=123456)
-    @patch("core.auth_views.send_sms")
-    def test_otp_changes_password_for_registered_mobile(self, send_sms_mock, _randbelow):
-        user = get_user_model().objects.create_user(username="manish", password="Old-password-123!")
-        UserProfile.objects.create(user=user, mobile_number="9876543210")
-
-        response = self.client.post("/accounts/password-reset/", {"username": "manish"})
-        self.assertRedirects(response, "/accounts/password-reset/verify/")
-        send_sms_mock.assert_called_once()
-        self.assertEqual(send_sms_mock.call_args.args[0], "+919876543210")
-        self.assertIn("123456", send_sms_mock.call_args.args[1])
-        reset = PasswordResetOTP.objects.get(user=user)
-        self.assertTrue(check_password("123456", reset.otp_hash))
-
-        response = self.client.post("/accounts/password-reset/verify/", {
-            "otp": "123456",
-            "new_password": "New-safe-password-456!",
-            "confirm_password": "New-safe-password-456!",
-        })
-        self.assertRedirects(response, "/accounts/login/")
-        user.refresh_from_db()
-        reset.refresh_from_db()
-        self.assertTrue(user.check_password("New-safe-password-456!"))
-        self.assertTrue(reset.consumed)
-
-    @patch("core.auth_views.send_sms")
-    def test_invalid_otp_increments_attempts_and_does_not_change_password(self, send_sms_mock):
-        user = get_user_model().objects.create_user(username="owner", password="Original-safe-123!")
-        UserProfile.objects.create(user=user, mobile_number="+919876543210")
-        self.client.post("/accounts/password-reset/", {"username": "owner"})
-        reset = PasswordResetOTP.objects.get(user=user)
-        reset.otp_hash = PasswordResetOTP.hash_otp("123456")
-        reset.save(update_fields=["otp_hash"])
-
-        response = self.client.post("/accounts/password-reset/verify/", {
-            "otp": "000000", "new_password": "Another-safe-456!", "confirm_password": "Another-safe-456!",
-        })
-        self.assertEqual(response.status_code, 200)
-        reset.refresh_from_db()
-        user.refresh_from_db()
-        self.assertEqual(reset.attempts, 1)
-        self.assertTrue(user.check_password("Original-safe-123!"))
-
-    @patch("core.auth_views.send_sms")
-    def test_expired_otp_is_rejected(self, send_sms_mock):
-        user = get_user_model().objects.create_user(username="owner", password="Original-safe-123!")
-        UserProfile.objects.create(user=user, mobile_number="+919876543210")
-        self.client.post("/accounts/password-reset/", {"username": "owner"})
-        reset = PasswordResetOTP.objects.get(user=user)
-        reset.otp_hash = PasswordResetOTP.hash_otp("123456")
-        reset.expires_at = timezone.now() - timedelta(seconds=1)
-        reset.save(update_fields=["otp_hash", "expires_at"])
-
-        response = self.client.post("/accounts/password-reset/verify/", {
-            "otp": "123456", "new_password": "Another-safe-456!", "confirm_password": "Another-safe-456!",
-        })
-        self.assertEqual(response.status_code, 200)
-        user.refresh_from_db()
-        self.assertTrue(user.check_password("Original-safe-123!"))
-
 
 class ProductionInventoryTest(TestCase):
 
