@@ -4,7 +4,7 @@ BrickIT is a Django business-management app for tracking day-to-day operations, 
 
 ## Features
 
-- Sign-in protected business overview with production, sales, delivery, inventory, and customer balance summaries
+- Sign-in protected business overview with production, sales, delivery, inventory, Analytics, Labour and customer balance summaries
 - Production records that update inventory for 4-inch and 6-inch bricks
 - Sales records with customer, payment, amount due, delivery status, and sorting/filtering by month, year, and brick type
 - Customer profiles with contact information, balances, and sales history
@@ -18,6 +18,7 @@ BrickIT is a Django business-management app for tracking day-to-day operations, 
 
 - Python 3.13
 - Django 6.1
+- HTML 5
 - SQLite for local development
 - PostgreSQL when `DATABASE_URL` is configured (as on Render)
 - WhiteNoise for serving static files in production
