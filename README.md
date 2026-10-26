@@ -4,12 +4,15 @@ BrickIT is a Django business-management app for tracking day-to-day operations, 
 
 ## Features
 
-- Business overview with production, sales, deliveries, and customer balance summaries
-- Brick production records and inventory tracking for 4-inch and 6-inch bricks
-- Sales, payment, customer, and delivery records
-- Employee records, attendance, and salary tracking
-- Analytics for sales, customers, brick types, and operating costs
-- Electricity, fuel, and miscellaneous expense tracking
+- Sign-in protected business overview with production, sales, delivery, inventory, and customer balance summaries
+- Production records that update inventory for 4-inch and 6-inch bricks
+- Sales records with customer, payment, amount due, delivery status, and sorting/filtering by month, year, and brick type
+- Customer profiles with contact information, balances, and sales history
+- Delivery status tracking
+- Employee records, attendance, and salary payment tracking
+- Analytics with year selection, monthly sales charts, and top customers filterable by month
+- Electricity, fuel, and miscellaneous cost records, with an interactive monthly comparison chart that reveals exact amounts
+- Responsive navigation for desktop and mobile screens
 
 ## Technology
 
@@ -35,6 +38,10 @@ python manage.py runserver
 
 Open <http://127.0.0.1:8000/> and sign in with the superuser credentials you created. The migrations add the default 4-inch and 6-inch brick types with zero starting inventory when they are missing.
 
+## Sign-in and account recovery
+
+Application pages require an authenticated account. Create local accounts with `python manage.py createsuperuser`; on Render, the `bootstrap_admin` command can create the initial administrator from environment variables. SMS one-time-password reset is not included. If the administrator loses access, change the password through Django admin or run `python manage.py changepassword <username>` in an authorized environment connected to the correct database.
+
 ## Deploy on Render
 
 The repository includes [`render.yaml`](render.yaml) for a Render Blueprint deployment. It configures a Django web service and PostgreSQL database, collects static files, applies migrations, and runs the app with Gunicorn.
@@ -47,17 +54,13 @@ Before the first deployment, add these environment variables to the Render web s
 | `BOOTSTRAP_ADMIN_PASSWORD` | Yes | Strong password for the initial administrator |
 | `BOOTSTRAP_ADMIN_EMAIL` | No | Email address for the administrator |
 
-The deployment runs `python manage.py bootstrap_admin`. It creates the initial administrator only when both username and password are configured; it does not reset an existing administrator's password. Keep credentials private and do not commit them to GitHub.
+The deployment runs `python manage.py bootstrap_admin`. It creates the initial administrator only when both username and password are configured; it does not reset an existing administrator's password. Set these values before the first deploy, and keep them private. Never commit credentials or production secrets to GitHub.
 
 Render supplies the database URL and generated secret key through the Blueprint configuration. The production settings disable debug mode and use the Render hostname for allowed hosts and HTTPS handling.
 
 ## Data and backups
 
 Local development uses `db.sqlite3`; a deployed instance uses the PostgreSQL database configured by `DATABASE_URL`. These databases are separate, so local records do not automatically appear on the deployed site. Back up the production database regularly and check the retention and backup options for the database plan you choose.
-
-## Password recovery
-
-SMS one-time-password password reset is not enabled. If an administrator loses access, reset the account password through Django's management tools or the Django admin using an authorized server session.
 
 ## License
 
